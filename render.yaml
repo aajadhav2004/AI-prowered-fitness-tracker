@@ -1,0 +1,50 @@
+services:
+  # Backend API Server
+  - type: web
+    name: fitness-tracker-api
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: 8080
+      - key: ML_SERVICE_URL
+        fromService:
+          type: web
+          name: fitness-tracker-ml
+          envVarKey: RENDER_EXTERNAL_URL
+
+  # ML Service (Python)
+  - type: web
+    name: fitness-tracker-ml
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: cd ml-service && pip install -r requirements.txt
+    startCommand: cd ml-service && python app.py
+    envVars:
+      - key: PORT
+        value: 5000
+
+  # Frontend (Static Site)
+  - type: web
+    name: fitness-tracker-frontend
+    env: static
+    region: oregon
+    plan: free
+    buildCommand: cd client && npm install && npm run build
+    staticPublishPath: client/build
+    envVars:
+      - key: REACT_APP_API_URL
+        fromService:
+          type: web
+          name: fitness-tracker-api
+          envVarKey: RENDER_EXTERNAL_URL
