@@ -1,13 +1,74 @@
 import React, { useState } from "react";
+import { Mic } from "lucide-react";
 import api from "../api";
+import WorkoutVoiceAssistant from "./WorkoutVoiceAssistant";
 
 export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("General");
+  const [category, setCategory] = useState("Cardio");
   const [duration, setDuration] = useState(30);
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(12);
   const [notes, setNotes] = useState("");
+  const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
+
+  // Common workout names
+  const workoutNames = [
+    "Running",
+    "Cycling",
+    "Swimming",
+    "Walking",
+    "Jogging",
+    "Push-ups",
+    "Pull-ups",
+    "Squats",
+    "Lunges",
+    "Plank",
+    "Bench Press",
+    "Deadlift",
+    "Shoulder Press",
+    "Bicep Curls",
+    "Tricep Dips",
+    "Leg Press",
+    "Crunches",
+    "Burpees",
+    "Jump Rope",
+    "Mountain Climbers",
+    "Yoga",
+    "Pilates",
+    "Zumba",
+    "Boxing",
+    "Kickboxing",
+    "Rowing",
+    "Elliptical",
+    "Treadmill",
+    "Stair Climbing",
+    "HIIT Workout"
+  ];
+
+  // Common workout categories
+  const categories = [
+    "Cardio",
+    "Strength Training",
+    "Weightlifting",
+    "Bodyweight",
+    "Flexibility",
+    "Sports",
+    "CrossFit",
+    "Yoga",
+    "Pilates",
+    "Martial Arts",
+    "Dance",
+    "Swimming",
+    "Cycling",
+    "Running",
+    "HIIT",
+    "Functional Training",
+    "Core",
+    "Upper Body",
+    "Lower Body",
+    "Full Body"
+  ];
 
   // Function to get today's date in IST (YYYY-MM-DD)
   const getISTDate = () => {
@@ -21,26 +82,33 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
 
     const todayIST = getISTDate(); // auto IST date
 
+    // Debug: Log the values being sent
+    console.log("=== Submitting Workout ===");
+    console.log("Sets:", sets, "Type:", typeof sets);
+    console.log("Reps:", reps, "Type:", typeof reps);
+    console.log("Duration:", duration, "Type:", typeof duration);
+
     try {
-      const r = await api.post("/addWorkout", {
+      const workoutData = {
         name,
         category,
-        duration,
-        sets,
-        reps,
+        duration: Number(duration),
+        sets: Number(sets),
+        reps: Number(reps),
         notes,
-        date: todayIST, // ⬅️ Auto date here
-      });
+        date: todayIST,
+      };
+
+      console.log("Workout data being sent:", workoutData);
+
+      const r = await api.post("/addWorkout", workoutData);
+
+      console.log("Workout saved:", r.data.workout);
 
       setWorkouts((prev) => [r.data.workout, ...prev]);
 
       // Reset fields
-      setName("");
-      setCategory("General");
-      setDuration(30);
-      setSets(3);
-      setReps(12);
-      setNotes("");
+      resetForm();
 
       // Refresh dashboard
       await refreshDaily();
@@ -48,62 +116,142 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
 
       alert("Workout added!");
     } catch (err) {
+      console.error("Error adding workout:", err);
+      alert(err.response?.data?.error || "Failed to add workout");
+    }
+  };
+
+  const resetForm = () => {
+    setName("");
+    setCategory("Cardio");
+    setDuration(30);
+    setSets(3);
+    setReps(12);
+    setNotes("");
+  };
+
+  const handleVoiceWorkoutSubmit = async (workoutData) => {
+    const todayIST = getISTDate();
+
+    try {
+      const r = await api.post("/addWorkout", {
+        ...workoutData,
+        date: todayIST,
+      });
+
+      setWorkouts((prev) => [r.data.workout, ...prev]);
+
+      // Refresh dashboard
+      await refreshDaily();
+      await fetchWeekly();
+
+      // Close voice assistant
+      setIsVoiceAssistantOpen(false);
+    } catch (err) {
+      console.error("Failed to add workout via voice:", err);
       alert(err.response?.data?.error || "Failed to add workout");
     }
   };
 
   return (
-    <form onSubmit={submit} className="space-y-2">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Workout name"
-        className="w-full p-2 border rounded"
-        required
-      />
+    <>
+      <div className="relative pb-2">
+        {/* Voice Assistant Button - Floating Top Right */}
+        <button
+          type="button"
+          onClick={() => setIsVoiceAssistantOpen(true)}
+          className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-600 text-white rounded-full flex items-center justify-center hover:shadow-lg transform hover:scale-105 transition-all duration-200 group shadow-md z-50"
+          title="Voice Assistant - Add workout by speaking"
+          style={{ marginTop: '-60px' }}
+        >
+          <Mic className="w-5 h-5 group-hover:animate-pulse" />
+        </button>
 
-      <input
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        placeholder="Category"
-        className="w-full p-2 border rounded"
-      />
+        <form onSubmit={submit} className="space-y-2">
+          {/* Workout Name Dropdown */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Workout Name
+            </label>
+            <select
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Select a workout</option>
+              {workoutNames.map((workout) => (
+                <option key={workout} value={workout}>
+                  {workout}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div className="flex gap-2">
-        Sets:<input
+        {/* Category Dropdown */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Category
+          </label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-2">
+          Sets:<input
+            type="number"
+            value={sets}
+            onChange={(e) => setSets(Number(e.target.value))}
+            placeholder="Sets"
+            className="w-1/2 p-2 border rounded"
+          />
+          Reps:<input
+            type="number"
+            value={reps}
+            onChange={(e) => setReps(Number(e.target.value))}
+            placeholder="Reps"
+            className="w-1/2 p-2 border rounded"
+          />
+        </div>
+
+        Duration :<input
           type="number"
-          value={sets}
-          onChange={(e) => setSets(Number(e.target.value))}
-          placeholder="Sets"
-          className="w-1/2 p-2 border rounded"
+          value={duration}
+          onChange={(e) => setDuration(Number(e.target.value))}
+          className="w-full p-2 border rounded"
+          placeholder="Duration (min)"
         />
-        Reps:<input
-          type="number"
-          value={reps}
-          onChange={(e) => setReps(Number(e.target.value))}
-          placeholder="Reps"
-          className="w-1/2 p-2 border rounded"
-        />
+
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="w-full p-2 border rounded"
+          placeholder="Notes"
+        ></textarea>
+
+        <button className="w-full bg-blue-600 text-white py-2 rounded">
+          Add Workout
+        </button>
+      </form>
       </div>
 
-      Duration :<input
-        type="number"
-        value={duration}
-        onChange={(e) => setDuration(Number(e.target.value))}
-        className="w-full p-2 border rounded"
-        placeholder="Duration (min)"
+      {/* Voice Assistant Modal */}
+      <WorkoutVoiceAssistant
+        isOpen={isVoiceAssistantOpen}
+        onClose={() => setIsVoiceAssistantOpen(false)}
+        onWorkoutSubmit={handleVoiceWorkoutSubmit}
+        workoutNames={workoutNames}
+        categories={categories}
       />
-
-      <textarea
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        className="w-full p-2 border rounded"
-        placeholder="Notes"
-      ></textarea>
-
-      <button className="w-full bg-blue-600 text-white py-2 rounded">
-        Add Workout
-      </button>
-    </form>
+    </>
   );
 }

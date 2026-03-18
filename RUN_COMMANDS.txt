@@ -1,0 +1,84 @@
+# IntelliFit - Run Commands
+
+## Prerequisites
+- Node.js installed
+- Python installed
+- MongoDB Atlas connection string in server/.env
+
+## 1. Start Backend Server
+Open Terminal 1:
+```
+cd server
+npm install
+npm run dev
+```
+Server will run on: http://localhost:8080
+
+## 2. Start Frontend Client
+Open Terminal 2:
+```
+cd client
+npm install
+npm start
+```
+Client will run on: http://localhost:3000
+
+## 3. Start ML Service
+Open Terminal 3:
+``
+cd ml-service
+uvicorn app:app --reload
+```
+ML Service will run on: http://127.0.0.1:8000
+
+## 4. Seed Database (Optional - Run Once)
+Open Terminal 4:
+```
+cd server
+node seed.js
+node seedMeals.js
+```
+
+## Environment Variables Required
+
+### server/.env
+```
+MONGODB_URL=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+PORT=8080
+```
+
+## Startup Order
+1. Start Backend Server first (Terminal 1)
+2. Start ML Service (Terminal 3)
+3. Start Frontend Client (Terminal 2)
+4. Open browser: http://localhost:3000
+
+## Troubleshooting
+
+### If Backend fails:
+- Check MongoDB connection string
+- Ensure port 8080 is free
+
+### If ML Service fails:
+- Install dependencies: pip install fastapi uvicorn joblib numpy scikit-learn
+- Check if port 8000 is free
+
+### If Frontend fails:
+- Clear node_modules: rm -rf node_modules && npm install
+- Check if port 3000 is free
+
+## Quick Start (All in one)
+```
+# Terminal 1 - Backend
+cd server && npm run dev
+
+# Terminal 2 - ML Service  
+cd ml-service && python app.py
+
+# Terminal 3 - Frontend
+cd client && npm start
+```
+
+## Stop All Services
+Press Ctrl+C in each terminal to stop the services.

@@ -1,6 +1,7 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import api, { setAuthToken } from "./api";
+import VoiceAssistant from "./components/VoiceAssistant";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -11,6 +12,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MotivationScreen from "./pages/MotivationScreen";
 import UserInfo from "./pages/UserInfo";
+import DailyDiet from "./pages/DailyDiet";
+import Leaderboard from "./pages/Leaderboard";
 
 setAuthToken(localStorage.getItem("token"));
 
@@ -18,6 +21,15 @@ setAuthToken(localStorage.getItem("token"));
 function Private({ children }) {
   const token = localStorage.getItem("token");
   return token ? children : <Navigate to="/login" replace />;
+}
+
+// Component to conditionally show VoiceAssistant
+function VoiceAssistantWrapper() {
+  const location = useLocation();
+  const publicRoutes = ["/login", "/register", "/motivation"];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
+  
+  return !isPublicRoute ? <VoiceAssistant /> : null;
 }
 
 // App routes
@@ -63,13 +75,13 @@ export default function App() {
           }
         />
         <Route path="/userinfo" element={<Private><UserInfo /></Private> } />
-        
-
+        <Route path="/diet" element={<Private><DailyDiet /></Private> } />
+        <Route path="/leaderboard" element={<Private><Leaderboard /></Private> } />
 
       </Routes>
       
-
-      
+      {/* Voice Assistant - Only on private routes */}
+      <VoiceAssistantWrapper />
 
     </BrowserRouter>
   );

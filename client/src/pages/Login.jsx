@@ -19,7 +19,9 @@ export default function Login() {
 
       nav("/motivation");
     } catch (err) {
-      alert(err.response?.data?.error || "Login failed");
+      console.error("Login error:", err);
+      console.error("Error response:", err.response);
+      alert(err.response?.data?.error || err.message || "Login failed");
     }
   };
 

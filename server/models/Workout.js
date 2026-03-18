@@ -13,10 +13,6 @@ const workoutSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now }
 });
 
-
-// Ensure each user can log one workout per name per date
-workoutSchema.index({ user: 1, name: 1, date: 1 }, { unique: true });
-
 // Export model
 export default mongoose.models.Workout ||
   mongoose.model("Workout", workoutSchema);

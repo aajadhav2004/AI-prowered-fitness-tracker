@@ -28,7 +28,8 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ["Male", "Female", "Other"],
+    enum: ["Male", "Female", "Other", null],
+    default: null,
   },
   activityLevel: {
     type: String,
@@ -37,6 +38,36 @@ const userSchema = new mongoose.Schema({
   injuries: {
     type: String,
     trim: true,
+  },
+  // Diet Recommendation Fields
+  targetWeight: {
+    type: Number,
+  },
+  fitnessGoal: {
+    type: String,
+    enum: ["weight_loss", "weight_gain", "maintain"],
+    default: "maintain",
+  },
+  dietCategory: {
+    type: String,
+    enum: ["vegetarian", "non-vegetarian"],
+    default: "non-vegetarian",
+  },
+  foodAllergies: {
+    type: [String],
+    default: [],
+  },
+  preferredCuisine: {
+    type: String,
+    trim: true,
+  },
+  lastDietGeneratedAt: {
+    type: Date,
+    default: null,
+  },
+  currentWeekDietPlan: {
+    type: Object,
+    default: null,
   },
   createdAt: {
     type: Date,
