@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import api from "../api";
 
 export default function Blogs() {
@@ -96,6 +97,8 @@ export default function Blogs() {
           </div>
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 }

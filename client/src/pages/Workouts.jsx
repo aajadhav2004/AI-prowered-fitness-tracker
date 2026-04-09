@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import AddSmall from "../components/AddSmall";
 import api, { setAuthToken } from "../api";
 import { Calendar, Plus, Activity } from "lucide-react";
+import { toTitleCase } from "../utils/textUtils";
 
 export default function Workouts() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -140,7 +142,7 @@ export default function Workouts() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <p className="text-sm text-blue-600 font-semibold uppercase">{w.category || "General"}</p>
+                      <p className="text-sm text-blue-600 font-semibold uppercase">{toTitleCase(w.category || "General")}</p>
                       <h3 className="text-xl font-bold text-gray-800 mt-1">{w.name}</h3>
                     </div>
                     <span className="text-2xl">💪</span>
@@ -174,6 +176,8 @@ export default function Workouts() {
           )}
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 }

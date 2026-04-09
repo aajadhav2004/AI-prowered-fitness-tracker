@@ -13,11 +13,18 @@ export default function Login() {
     try {
       const res = await api.post("/login", { email, password });
       const token = res.data.token;
+      const role = res.data.role;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
       setAuthToken(token);
 
-      nav("/motivation");
+      // Redirect based on role
+      if (role === 'admin') {
+        nav("/admin");
+      } else {
+        nav("/motivation");
+      }
     } catch (err) {
       console.error("Login error:", err);
       console.error("Error response:", err.response);

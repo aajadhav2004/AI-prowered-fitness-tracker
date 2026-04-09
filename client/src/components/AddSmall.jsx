@@ -1,16 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mic } from "lucide-react";
 import api from "../api";
 import WorkoutVoiceAssistant from "./WorkoutVoiceAssistant";
+import { toTitleCase } from "../utils/textUtils";
 
 export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Cardio");
+  const [category, setCategory] = useState("");
   const [duration, setDuration] = useState(30);
   const [sets, setSets] = useState(3);
   const [reps, setReps] = useState(12);
   const [notes, setNotes] = useState("");
   const [isVoiceAssistantOpen, setIsVoiceAssistantOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      setCategories(response.data.categories);
+      // Set first category as default if available
+      if (response.data.categories.length > 0 && !category) {
+        setCategory(response.data.categories[0].name);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
 
   // Common workout names
   const workoutNames = [
@@ -44,30 +63,6 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
     "Treadmill",
     "Stair Climbing",
     "HIIT Workout"
-  ];
-
-  // Common workout categories
-  const categories = [
-    "Cardio",
-    "Strength Training",
-    "Weightlifting",
-    "Bodyweight",
-    "Flexibility",
-    "Sports",
-    "CrossFit",
-    "Yoga",
-    "Pilates",
-    "Martial Arts",
-    "Dance",
-    "Swimming",
-    "Cycling",
-    "Running",
-    "HIIT",
-    "Functional Training",
-    "Core",
-    "Upper Body",
-    "Lower Body",
-    "Full Body"
   ];
 
   // Function to get today's date in IST (YYYY-MM-DD)
@@ -123,7 +118,7 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
 
   const resetForm = () => {
     setName("");
-    setCategory("Cardio");
+    setCategory(categories.length > 0 ? categories[0].name : "");
     setDuration(30);
     setSets(3);
     setReps(12);
@@ -197,12 +192,17 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
           >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
+            {categories.length === 0 ? (
+              <option value="">No categories available</option>
+            ) : (
+              categories.map((cat) => (
+                <option key={cat._id} value={cat.name}>
+                  {toTitleCase(cat.name)}
+                </option>
+              ))
+            )}
           </select>
         </div>
 
@@ -250,7 +250,7 @@ export default function AddSmall({ setWorkouts, refreshDaily, fetchWeekly }) {
         onClose={() => setIsVoiceAssistantOpen(false)}
         onWorkoutSubmit={handleVoiceWorkoutSubmit}
         workoutNames={workoutNames}
-        categories={categories}
+        categories={categories.map(cat => cat.name)}
       />
     </>
   );

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import userRoutes from './routes/userRoutes.js';
 import dailyDietRoutes from "./routes/dailyDietRoutes.js";
+import adminRoutes from './routes/adminRoutes.js';
 import Workout from './models/Workout.js';
 
 dotenv.config();
@@ -19,6 +20,19 @@ app.use(cors({
 app.use(express.json());
 app.use('/api/user', userRoutes);
 app.use("/api/diet", dailyDietRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('=== SERVER ERROR ===');
+  console.error('Error:', err);
+  console.error('Stack:', err.stack);
+  console.error('Message:', err.message);
+  res.status(500).json({ 
+    error: err.message || 'Internal server error',
+    details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+  });
+});
 
 const PORT = process.env.PORT || 8080;
 

@@ -60,8 +60,7 @@ export default function MotivationScreen() {
     }, frameMs);
 
     return () => clearInterval(timerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [nav, durationMs, frameMs]);
 
   // subtle controls for SVG dumbbell animation using framer controls
   const controls = useAnimation();

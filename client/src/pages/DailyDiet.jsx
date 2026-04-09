@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
-import { Loader, Calendar, User as UserIcon, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import DietBot from "../components/DietBot";
+import Footer from "../components/Footer";
+import { Loader, Calendar, User as UserIcon, AlertCircle, ChevronDown, ChevronUp, Bot } from "lucide-react";
 
 export default function DailyDiet() {
 
@@ -14,6 +16,7 @@ export default function DailyDiet() {
   const [error, setError] = useState(null);
   const [expandedDay, setExpandedDay] = useState(null);
   const [generationInfo, setGenerationInfo] = useState(null); // Track generation date and next available date
+  const [isDietBotOpen, setIsDietBotOpen] = useState(false);
 
   // Fetch user profile on component mount
   useEffect(() => {
@@ -397,6 +400,23 @@ export default function DailyDiet() {
         )}
 
       </div>
+
+      {/* Diet Bot Floating Button */}
+      <button
+        onClick={() => setIsDietBotOpen(true)}
+        className="fixed bottom-24 right-6 bg-gradient-to-r from-green-600 to-blue-600 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 z-40 group"
+        title="Diet Bot - Ask nutrition questions"
+      >
+        <Bot className="w-7 h-7" />
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+          AI
+        </span>
+      </button>
+
+      {/* Diet Bot Chatbot */}
+      <DietBot isOpen={isDietBotOpen} onClose={() => setIsDietBotOpen(false)} />
+      
+      <Footer />
     </div>
   );
 }

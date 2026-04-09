@@ -8,6 +8,7 @@ import mongoose from 'mongoose';
 import Blog from '../models/Blog.js';
 import { calculateCaloriesBurnt, calculateBMI } from '../utils/calories.js';
 import { getISTDate, getISTMidnightDate } from '../utils/getISTDate.js';
+import { updateUserWeight, recordManualWeightUpdate, getWeightProgress } from '../utils/weightTracker.js';
 
 export const register = async (req, res) => {
   try {
@@ -92,7 +93,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-    res.json({ token });
+    res.json({ token, role: user.role });
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(500).json({ error: 'Login failed: ' + err.message });
@@ -184,6 +185,11 @@ export const addWorkout = async (req, res) => {
     );
 
     res.status(201).json({ message: "Workout added", workout: saved });
+    
+    // Try to update weight (will only update if it's been a week)
+    updateUserWeight(userId).catch(err => {
+      console.log('Weight update check:', err.message);
+    });
   } catch (err) {
     console.error("addWorkout error:", err.message, err.stack);
     res.status(500).json({ error: err.message });
@@ -370,11 +376,24 @@ export const getMonthlyTracker = async (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const updated = await User.findByIdAndUpdate(req.user.id, req.body, {
+    const userId = req.user.id;
+    const oldUser = await User.findById(userId);
+    
+    // Check if weight is being updated
+    const weightChanged = req.body.weight && req.body.weight !== oldUser.weight;
+    
+    const updated = await User.findByIdAndUpdate(userId, req.body, {
       new: true,
     });
+    
+    // Record manual weight update if weight changed
+    if (weightChanged) {
+      await recordManualWeightUpdate(userId, req.body.weight);
+    }
+    
     res.json({ user: updated });
   } catch (err) {
+    console.error('Profile update error:', err);
     res.status(500).json({ error: "Profile update failed" });
   }
 };
@@ -407,9 +426,9 @@ export const getLeaderboard = async (req, res) => {
     
     const currentUserId = req.user.id;
 
-    // Get all users first
+    // Get all users except admins
     console.log("Fetching all users...");
-    const allUsers = await User.find({}, { name: 1, email: 1 }).lean();
+    const allUsers = await User.find({ role: { $ne: 'admin' } }, { name: 1, email: 1 }).lean();
     console.log("Total users found:", allUsers.length);
 
     // Aggregate total calories for users who have workout data
@@ -474,6 +493,142 @@ export const getLeaderboard = async (req, res) => {
     res.status(500).json({ 
       error: "Failed to fetch leaderboard",
       details: error.message 
+    });
+  }
+};
+
+
+// Weight tracking endpoints
+
+// Trigger weight update (can be called manually or via cron job)
+export const triggerWeightUpdate = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await updateUserWeight(userId);
+    
+    if (!result) {
+      return res.json({ 
+        message: 'No weight update needed yet (updates weekly)',
+        updated: false 
+      });
+    }
+
+    res.json({ 
+      message: 'Weight updated successfully',
+      updated: true,
+      ...result 
+    });
+  } catch (err) {
+    console.error('Error triggering weight update:', err);
+    res.status(500).json({ error: 'Failed to update weight' });
+  }
+};
+
+// Get weight progress history
+export const getWeightProgressData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const progress = await getWeightProgress(userId);
+    
+    if (!progress) {
+      return res.json({ 
+        message: 'No weight history available',
+        progress: null 
+      });
+    }
+
+    res.json({ progress });
+  } catch (err) {
+    console.error('Error getting weight progress:', err);
+    res.status(500).json({ error: 'Failed to get weight progress' });
+  }
+};
+
+
+// Diet Bot - Gemini AI chatbot for diet queries
+export const dietBotChat = async (req, res) => {
+  try {
+    const { message, language = 'en' } = req.body;
+    
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Check API key
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not found in environment variables');
+      return res.status(500).json({ 
+        error: 'API key not configured',
+        response: "The Diet Bot is not configured properly. Please contact support."
+      });
+    }
+
+    // Import Gemini AI
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    // Get user profile for personalized responses
+    const user = await User.findById(req.user.id).select('-password');
+    
+    // Language-specific instructions
+    const languageInstructions = {
+      en: 'Respond in English.',
+      hi: 'Respond in Hindi (हिंदी). Use Devanagari script.',
+      mr: 'Respond in Marathi (मराठी). Use Devanagari script.'
+    };
+    
+    // Create context-aware prompt
+    const prompt = `You are "Diet Bot", a friendly nutrition assistant for IntelliFit fitness app.
+
+IMPORTANT: ${languageInstructions[language] || languageInstructions.en}
+
+User Profile:
+${user ? `- Name: ${user.name}
+- Weight: ${user.weight || 'Not set'} kg
+- Height: ${user.height || 'Not set'} cm  
+- Age: ${user.age || 'Not set'}
+- Goal: ${user.fitnessGoal || 'Not set'}
+- Diet: ${user.dietCategory || 'Not set'}
+- Allergies: ${user.foodAllergies?.length > 0 ? user.foodAllergies.join(', ') : 'None'}` : 'Profile not available'}
+
+Guidelines:
+- Answer diet and nutrition questions
+- Keep responses concise (2-3 paragraphs)
+- Be friendly and encouraging
+- Use simple language
+- Add emojis occasionally 😊
+- If medical question, advise seeing a doctor
+- MUST respond in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'English'}
+
+Question: ${message}
+
+Answer (in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'English'}):`;
+
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    const botResponse = response.text();
+
+    console.log(`Diet Bot response generated successfully in ${language}`);
+    res.json({ response: botResponse });
+    
+  } catch (err) {
+    console.error('Diet Bot error:', err.message);
+    console.error('Error details:', err);
+    
+    // Provide helpful error message
+    let errorMessage = "I'm having trouble right now. Please try again! 🤖";
+    
+    if (err.message && err.message.includes('API key')) {
+      errorMessage = "API key issue. Please check configuration.";
+    } else if (err.message && err.message.includes('404')) {
+      errorMessage = "Model not available. Trying to reconnect...";
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to get response from Diet Bot',
+      response: errorMessage
     });
   }
 };

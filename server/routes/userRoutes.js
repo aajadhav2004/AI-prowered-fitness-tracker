@@ -13,7 +13,11 @@ import {
   updatePassword,
   updateProfile,
   getLeaderboard,
+  triggerWeightUpdate,
+  getWeightProgressData,
+  dietBotChat,
 } from "../controllers/userController.js";
+import { getCategoriesPublic, getSubCategoriesPublic, getTutorialsPublic } from "../controllers/adminController.js";
 import verifyToken from "../middleware/verifyToken.js";
 import User from "../models/User.js";
 
@@ -42,6 +46,16 @@ router.get("/monthly", verifyToken, getMonthlyTracker);
 router.get("/exercises", getExercises);
 router.get("/blogs", getBlogs);
 router.get("/leaderboard", verifyToken, getLeaderboard);
+router.get("/categories", getCategoriesPublic);
+router.get("/sub-categories", getSubCategoriesPublic);
+router.get("/tutorials", getTutorialsPublic);
+
+// Weight tracking routes
+router.post("/weight/update", verifyToken, triggerWeightUpdate);
+router.get("/weight/progress", verifyToken, getWeightProgressData);
+
+// Diet Bot chatbot
+router.post("/diet-bot", verifyToken, dietBotChat);
 
 
 export default router;

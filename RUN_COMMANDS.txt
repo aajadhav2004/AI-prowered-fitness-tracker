@@ -39,6 +39,14 @@ node seed.js
 node seedMeals.js
 ```
 
+## 5. Migrate Focus Area Data (Run Once After Updating to Checkbox System)
+If you have existing tutorials with old string-based focus areas, run this migration:
+```
+cd server
+node migrateFocusArea.js
+```
+This will convert all old focus area strings to the new array format.
+
 ## Environment Variables Required
 
 ### server/.env

@@ -69,6 +69,25 @@ const userSchema = new mongoose.Schema({
     type: Object,
     default: null,
   },
+  role: {
+    type: String,
+    enum: ["user", "admin"],
+    default: "user",
+  },
+  // Weight tracking
+  weightHistory: [{
+    weight: Number,
+    date: Date,
+    source: {
+      type: String,
+      enum: ["manual", "auto"],
+      default: "manual"
+    }
+  }],
+  lastWeightUpdate: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

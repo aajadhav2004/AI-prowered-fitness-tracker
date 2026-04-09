@@ -165,6 +165,14 @@ const VoiceAssistant = () => {
         navigate("/leaderboard");
         setIsProcessing(false);
       }, 500);
+    } else if (lowerCommand.includes("report") || lowerCommand.includes("workout report")) {
+      console.log("Navigating to workout report");
+      speak("Opening workout report page");
+      setFeedback("Navigating to workout report page");
+      setTimeout(() => {
+        navigate("/workout-report");
+        setIsProcessing(false);
+      }, 500);
     } else if (lowerCommand.includes("logout") || lowerCommand.includes("sign out")) {
       console.log("Logging out");
       speak("Logging out. Goodbye!");
@@ -176,7 +184,7 @@ const VoiceAssistant = () => {
       }, 500);
     } else {
       console.log("Command not recognized");
-      speak("Command not recognized. Try saying dashboard, workout, diet, tutorial, blogs, profile, leaderboard, or logout");
+      speak("Command not recognized. Try saying dashboard, workout, diet, tutorial, blogs, profile, leaderboard, report, or logout");
       setFeedback("Command not recognized");
       setIsProcessing(false);
     }
@@ -281,6 +289,7 @@ const VoiceAssistant = () => {
               <li>• "Open blogs"</li>
               <li>• "Open profile"</li>
               <li>• "Open leaderboard"</li>
+              <li>• "Open report"</li>
               <li>• "Logout"</li>
             </ul>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import axios from "axios";
 import { Trophy, Medal, Award, Flame, TrendingUp, Users, Loader } from "lucide-react";
 
@@ -266,6 +267,8 @@ export default function Leaderboard() {
           </div>
         )}
       </div>
+      
+      <Footer />
     </div>
   );
 }
