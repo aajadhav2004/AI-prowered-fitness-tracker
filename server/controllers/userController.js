@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import Workout from '../models/Workout.js';
 import DailyTracker from '../models/DailyTracker.js';
@@ -9,6 +10,7 @@ import Blog from '../models/Blog.js';
 import { calculateCaloriesBurnt, calculateBMI } from '../utils/calories.js';
 import { getISTDate, getISTMidnightDate } from '../utils/getISTDate.js';
 import { updateUserWeight, recordManualWeightUpdate, getWeightProgress } from '../utils/weightTracker.js';
+import { sendPasswordResetOTP } from '../services/emailService.js';
 
 export const register = async (req, res) => {
   try {
@@ -579,10 +581,15 @@ export const dietBotChat = async (req, res) => {
       mr: 'Respond in Marathi (मराठी). Use Devanagari script.'
     };
     
-    // Create context-aware prompt
-    const prompt = `You are "Diet Bot", a friendly nutrition assistant for IntelliFit fitness app.
+    // Create context-aware prompt with strict diet-only restriction
+    const prompt = `You are "Diet Bot", a specialized nutrition and diet assistant for IntelliFit fitness app.
 
-IMPORTANT: ${languageInstructions[language] || languageInstructions.en}
+CRITICAL RULES:
+1. ONLY answer questions related to: diet, nutrition, food, meals, calories, vitamins, minerals, eating habits, meal planning, recipes, weight management through diet, hydration, supplements, and healthy eating.
+2. If the question is NOT about diet/nutrition/food, politely decline and redirect to diet topics.
+3. DO NOT answer questions about: machine learning, technology, dates, time, general knowledge, sports, entertainment, or any non-diet topics.
+4. NEVER use asterisks (*) in your response. Use plain text formatting only.
+5. ${languageInstructions[language] || languageInstructions.en}
 
 User Profile:
 ${user ? `- Name: ${user.name}
@@ -593,22 +600,28 @@ ${user ? `- Name: ${user.name}
 - Diet: ${user.dietCategory || 'Not set'}
 - Allergies: ${user.foodAllergies?.length > 0 ? user.foodAllergies.join(', ') : 'None'}` : 'Profile not available'}
 
-Guidelines:
-- Answer diet and nutrition questions
-- Keep responses concise (2-3 paragraphs)
+Response Guidelines:
+- Keep responses concise (2-3 paragraphs maximum)
 - Be friendly and encouraging
-- Use simple language
-- Add emojis occasionally 😊
-- If medical question, advise seeing a doctor
-- MUST respond in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'English'}
+- Use simple, clear language
+- Add emojis occasionally for friendliness 😊
+- For medical concerns, advise consulting a doctor or nutritionist
+- Use numbered lists or bullet points WITHOUT asterisks
+- Use plain text formatting only (no bold, no asterisks)
 
 Question: ${message}
 
-Answer (in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'English'}):`;
+If this question is NOT about diet, nutrition, or food, respond with:
+"I'm a diet and nutrition assistant. I can only help with questions about food, meals, nutrition, and healthy eating. Please ask me about diet-related topics like meal planning, calories, nutrients, or healthy recipes!"
+
+If it IS about diet/nutrition, provide a helpful answer in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'English'} WITHOUT using asterisks:`;
 
     const result = await model.generateContent(prompt);
     const response = result.response;
-    const botResponse = response.text();
+    let botResponse = response.text();
+    
+    // Remove all asterisks from the response
+    botResponse = botResponse.replace(/\*/g, '');
 
     console.log(`Diet Bot response generated successfully in ${language}`);
     res.json({ response: botResponse });
@@ -630,5 +643,86 @@ Answer (in ${language === 'hi' ? 'Hindi' : language === 'mr' ? 'Marathi' : 'Engl
       error: 'Failed to get response from Diet Bot',
       response: errorMessage
     });
+  }
+};
+
+
+
+// Forgot Password - Send OTP via email
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: 'No account found with this email' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Save OTP and expiry to database (10 minutes)
+    user.resetPasswordOTP = otp;
+    user.resetPasswordOTPExpires = Date.now() + 600000; // 10 minutes
+    await user.save();
+
+    // Send OTP email
+    try {
+      await sendPasswordResetOTP(email, otp);
+      res.json({ 
+        message: 'OTP sent successfully to your email',
+        email: email 
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+      user.resetPasswordOTP = null;
+      user.resetPasswordOTPExpires = null;
+      await user.save();
+      return res.status(500).json({ error: 'Failed to send OTP. Please try again.' });
+    }
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to process request' });
+  }
+};
+
+// Reset Password - Verify OTP and update password
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ error: 'Email, OTP, and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    // Find user with valid OTP
+    const user = await User.findOne({
+      email: email,
+      resetPasswordOTP: otp,
+      resetPasswordOTPExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired OTP' });
+    }
+
+    // Update password
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordOTP = null;
+    user.resetPasswordOTPExpires = null;
+    await user.save();
+
+    res.json({ message: 'Password reset successful' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password' });
   }
 };
