@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Send, Bot, Loader, Mic, Volume2, VolumeX, Globe } from 'lucide-react';
 import axios from 'axios';
+import { playActivationSound } from '../utils/soundUtils';
 
 const DietBot = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState([]);
@@ -119,6 +120,9 @@ const DietBot = ({ isOpen, onClose }) => {
       alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
       return;
     }
+
+    // Play activation sound
+    playActivationSound();
 
     if (isListening) {
       recognitionRef.current.stop();
@@ -394,7 +398,7 @@ const DietBot = ({ isOpen, onClose }) => {
             <button
               onClick={handleVoiceInput}
               disabled={isLoading}
-              className={`p-3 rounded-full transition shadow-lg ${
+              className={`p-3 rounded-full transition shadow-lg relative ${
                 isListening
                   ? 'bg-red-600 hover:bg-red-700 animate-pulse'
                   : 'bg-purple-600 hover:bg-purple-700'
@@ -402,6 +406,14 @@ const DietBot = ({ isOpen, onClose }) => {
               title={isListening ? 'Stop listening' : 'Voice input'}
             >
               <Mic className="w-5 h-5" />
+              
+              {/* Small blinking ring animation when listening */}
+              {isListening && (
+                <>
+                  <span className="absolute inset-0 rounded-full bg-red-400 opacity-75 animate-ping"></span>
+                  <span className="absolute inset-0 rounded-full border-2 border-red-300 animate-pulse"></span>
+                </>
+              )}
             </button>
             <button
               onClick={handleSend}

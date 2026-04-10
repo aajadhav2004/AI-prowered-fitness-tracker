@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Mic, Volume2, X, AlertCircle } from "lucide-react";
+import { playActivationSound } from "../utils/soundUtils";
 
 export default function WorkoutVoiceAssistant({ 
   onWorkoutSubmit, 
@@ -224,6 +225,10 @@ export default function WorkoutVoiceAssistant({
     if (recognitionRef.current && !isListening) {
       try {
         console.log(`🎤 Starting to listen for step ${currentStepRef.current}: ${steps[currentStepRef.current]?.field}`);
+        
+        // Play activation sound
+        playActivationSound();
+        
         setCurrentAnswer("");
         hasReceivedResponseRef.current = false;
         recognitionRef.current.start();
