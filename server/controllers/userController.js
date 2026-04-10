@@ -10,7 +10,7 @@ import Blog from '../models/Blog.js';
 import { calculateCaloriesBurnt, calculateBMI } from '../utils/calories.js';
 import { getISTDate, getISTMidnightDate } from '../utils/getISTDate.js';
 import { updateUserWeight, recordManualWeightUpdate, getWeightProgress } from '../utils/weightTracker.js';
-import { sendPasswordResetOTP } from '../services/emailService.js';
+import { sendPasswordResetOTP, sendWelcomeEmail } from '../services/emailService.js';
 
 export const register = async (req, res) => {
   try {
@@ -66,6 +66,12 @@ export const register = async (req, res) => {
     });
 
     console.log("User created successfully:", newUser._id);
+    
+    // Send welcome email (don't wait for it, don't fail registration if email fails)
+    sendWelcomeEmail(email, name).catch(err => {
+      console.error('Failed to send welcome email:', err.message);
+    });
+    
     res
       .status(201)
       .json({ message: "User created", userId: newUser._id });
