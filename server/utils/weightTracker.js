@@ -188,21 +188,58 @@ export async function recordManualWeightUpdate(userId, newWeight) {
 export async function getWeightProgress(userId) {
   try {
     const user = await User.findById(userId);
-    if (!user || !user.weightHistory || user.weightHistory.length === 0) {
+    if (!user) {
       return null;
     }
 
-    const history = user.weightHistory.slice(-12); // Last 12 entries
-    const startWeight = history[0].weight;
     const currentWeight = user.weight;
-    const totalChange = currentWeight - startWeight;
     const targetWeight = user.targetWeight;
+    
+    // Get weight history from last 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    let history = [];
+    
+    // If user has weight history, filter for last 30 days
+    if (user.weightHistory && user.weightHistory.length > 0) {
+      history = user.weightHistory.filter(h => new Date(h.date) >= thirtyDaysAgo);
+    }
+    
+    // If no history in last 30 days, add initial weight from registration
+    if (history.length === 0) {
+      // Add registration weight as first entry
+      history.push({
+        weight: currentWeight,
+        date: user.createdAt,
+        source: 'initial'
+      });
+    }
+    
+    // Always include current weight if it's not already the last entry
+    const lastHistoryWeight = history.length > 0 ? history[history.length - 1].weight : null;
+    if (lastHistoryWeight !== currentWeight) {
+      history.push({
+        weight: currentWeight,
+        date: user.lastWeightUpdate || new Date(),
+        source: user.lastWeightUpdate ? 'auto' : 'current'
+      });
+    }
+    
+    // Calculate min/max from last 30 days
+    const weights = history.map(h => h.weight);
+    const highest = Math.max(...weights);
+    const lowest = Math.min(...weights);
+    const startWeight = history[0].weight;
+    const totalChange = currentWeight - startWeight;
 
     return {
       currentWeight,
       startWeight,
       targetWeight,
       totalChange,
+      highest,
+      lowest,
       history: history.map(h => ({
         weight: h.weight,
         date: h.date,

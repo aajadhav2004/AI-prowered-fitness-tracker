@@ -31,12 +31,11 @@ export default function WeightGraph() {
         
         setWeightData(chartData);
         
-        // Calculate stats
-        const weights = progressData.history.map(h => h.weight);
-        const current = progressData.currentWeight || weights[weights.length - 1];
-        const highest = Math.max(...weights);
-        const lowest = Math.min(...weights);
-        const change = progressData.totalChange || (weights.length > 1 ? current - weights[0] : 0);
+        // Use highest/lowest from backend (calculated from last 30 days)
+        const current = progressData.currentWeight;
+        const highest = progressData.highest;
+        const lowest = progressData.lowest;
+        const change = progressData.totalChange || 0;
         
         setStats({ current, highest, lowest, change });
       } else {
