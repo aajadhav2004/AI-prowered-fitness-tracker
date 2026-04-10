@@ -112,7 +112,17 @@ export async function updateUserWeight(userId) {
     }
 
     const oldWeight = user.weight;
+    
+    // If this is the first weight update, save the old weight as the starting point
+    if (user.weightHistory.length === 0) {
+      user.weightHistory.push({
+        weight: oldWeight,
+        date: user.lastWeightUpdate || user.createdAt,
+        source: 'initial'
+      });
+    }
 
+    // Now add the new weight
     user.weightHistory.push({
       weight: newWeight,
       date: now,
@@ -204,34 +214,47 @@ export async function getWeightProgress(userId) {
     // If user has weight history, filter for last 30 days
     if (user.weightHistory && user.weightHistory.length > 0) {
       history = user.weightHistory.filter(h => new Date(h.date) >= thirtyDaysAgo);
+      
+      // If filtered history is empty but user was created within 30 days,
+      // check if there's an older entry we should include
+      if (history.length === 0 && user.createdAt >= thirtyDaysAgo) {
+        // Include the oldest weight history entry as starting point
+        history.push(user.weightHistory[0]);
+      }
     }
     
-    // If no history in last 30 days, add initial weight from registration
-    if (history.length === 0) {
-      // Add registration weight as first entry
-      history.push({
-        weight: currentWeight,
-        date: user.createdAt,
-        source: 'initial'
-      });
+    // If still no history and user was created within 30 days, 
+    // check if there's at least one entry in weightHistory
+    if (history.length === 0 && user.weightHistory && user.weightHistory.length > 0) {
+      // Add the very first weight entry ever recorded
+      history.push(user.weightHistory[0]);
     }
     
-    // Always include current weight if it's not already the last entry
+    // Calculate min/max from history
+    let highest = currentWeight;
+    let lowest = currentWeight;
+    let startWeight = currentWeight;
+    
+    if (history.length > 0) {
+      const weights = history.map(h => h.weight);
+      weights.push(currentWeight); // Include current weight in min/max calculation
+      highest = Math.max(...weights);
+      lowest = Math.min(...weights);
+      startWeight = history[0].weight;
+    }
+    
+    const totalChange = currentWeight - startWeight;
+    
+    // Add current weight to history for display if not already there
+    const historyForDisplay = [...history];
     const lastHistoryWeight = history.length > 0 ? history[history.length - 1].weight : null;
     if (lastHistoryWeight !== currentWeight) {
-      history.push({
+      historyForDisplay.push({
         weight: currentWeight,
         date: user.lastWeightUpdate || new Date(),
         source: user.lastWeightUpdate ? 'auto' : 'current'
       });
     }
-    
-    // Calculate min/max from last 30 days
-    const weights = history.map(h => h.weight);
-    const highest = Math.max(...weights);
-    const lowest = Math.min(...weights);
-    const startWeight = history[0].weight;
-    const totalChange = currentWeight - startWeight;
 
     return {
       currentWeight,
@@ -240,7 +263,7 @@ export async function getWeightProgress(userId) {
       totalChange,
       highest,
       lowest,
-      history: history.map(h => ({
+      history: historyForDisplay.map(h => ({
         weight: h.weight,
         date: h.date,
         source: h.source
