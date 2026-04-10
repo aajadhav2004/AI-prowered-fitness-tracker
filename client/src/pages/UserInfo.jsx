@@ -50,7 +50,8 @@ const UserInfo = () => {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/user/profile", {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
+      const res = await axios.get(`${API_BASE_URL}/user/profile`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -102,6 +103,7 @@ const UserInfo = () => {
 
   const updateProfile = async () => {
     try {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
       // Convert allergies string to array
       const updatedProfile = {
         ...editData,
@@ -111,7 +113,7 @@ const UserInfo = () => {
       };
 
       await axios.put(
-        "http://localhost:8080/api/user/update",
+        `${API_BASE_URL}/user/update`,
         updatedProfile,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -129,8 +131,9 @@ const UserInfo = () => {
 
   const updatePassword = async () => {
     try {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:8080/api";
       await axios.put(
-        "http://localhost:8080/api/user/updatePassword",
+        `${API_BASE_URL}/user/updatePassword`,
         passwords,
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
