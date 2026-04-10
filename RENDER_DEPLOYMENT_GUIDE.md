@@ -141,9 +141,18 @@ Fill in the following details:
 
 **Important**: The `runtime.txt` file in `ml-service/` folder specifies Python 3.12.1, which is compatible with the pandas version used in this project.
 
-### 3.3 No Environment Variables Needed
+### 3.3 Set Python Version
 
-Render automatically provides the `$PORT` variable.
+**IMPORTANT**: Add this environment variable to force Python 3.12.1:
+
+1. Click **"Advanced"** → Scroll to **"Environment Variables"**
+2. Click **"Add Environment Variable"**
+3. Add:
+   ```
+   PYTHON_VERSION = 3.12.1
+   ```
+
+This ensures compatibility with pandas 2.1.3. Without this, Render uses Python 3.14 which causes build failures.
 
 ### 3.4 Deploy ML Service
 
