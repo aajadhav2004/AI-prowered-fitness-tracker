@@ -210,15 +210,6 @@ const VoiceAssistant = () => {
           </div>
         </div>
       )}
-
-      {/* Browser Support Warning */}
-      {!recognitionRef.current && (
-        <div className="fixed bottom-28 right-6 bg-yellow-50 rounded-lg shadow-xl p-4 z-50 border-2 border-yellow-400 max-w-xs">
-          <p className="text-xs text-yellow-800">
-            ⚠️ Speech recognition not supported. Please use Chrome or Edge.
-          </p>
-        </div>
-      )}
     </>
   );
 };
