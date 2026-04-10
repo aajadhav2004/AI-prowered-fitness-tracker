@@ -22,15 +22,7 @@ export default function WeightGraph() {
       const response = await api.get('/weight/progress');
       const progressData = response.data.progress;
       
-      if (progressData && progressData.history && progressData.history.length > 0) {
-        // Format data for chart (last 10 entries)
-        const chartData = progressData.history.slice(-10).map((entry) => ({
-          date: new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          weight: entry.weight,
-        }));
-        
-        setWeightData(chartData);
-        
+      if (progressData) {
         // Use highest/lowest from backend (calculated from last 30 days)
         const current = progressData.currentWeight;
         const highest = progressData.highest;
@@ -38,6 +30,12 @@ export default function WeightGraph() {
         const change = progressData.totalChange || 0;
         
         setStats({ current, highest, lowest, change });
+        
+        // Show only current weight as single point in graph
+        setWeightData([{
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          weight: current,
+        }]);
       } else {
         // No history yet - fetch current weight from profile
         const profileRes = await api.get('/profile');
