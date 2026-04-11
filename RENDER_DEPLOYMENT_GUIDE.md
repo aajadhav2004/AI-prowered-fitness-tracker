@@ -97,7 +97,10 @@ FRONTEND_URL = https://fitness-tracker-frontend.onrender.com
 - Replace all `your_*` values with actual credentials
 - For `EMAIL_PASS`, use Gmail App Password (not regular password)
   - Go to Google Account → Security → 2-Step Verification → App Passwords
+  - Generate a new app password specifically for this application
+  - **CRITICAL**: Make sure "Less secure app access" is OFF (use App Password instead)
 - Keep `JWT_SECRET` secure and at least 32 characters
+- The email service uses port 587 (TLS) for better cloud platform compatibility
 - `FRONTEND_URL` will be your frontend URL (add this after deploying frontend in Step 5)
 - Note: Variable is `MONGODB_URL` (not `MONGODB_URI`) and `EMAIL` (not `EMAIL_USER`)
 
@@ -405,6 +408,45 @@ If you encounter issues:
 3. Verify all environment variables
 4. Test each service individually
 5. Check MongoDB Atlas network access
+
+---
+
+## Common Issues & Troubleshooting
+
+### Email Sending Errors (ENETUNREACH, ETIMEDOUT)
+
+If you see email errors like `ENETUNREACH` or `Connection timeout`:
+
+**Solution 1: Verify Gmail App Password**
+
+1. Go to Google Account → Security → 2-Step Verification
+2. Scroll down to "App passwords"
+3. Generate a NEW app password for "Mail" and "Other (Custom name)"
+4. Copy the 16-character password (no spaces)
+5. Update `EMAIL_PASS` environment variable in Render with this password
+6. Make sure `EMAIL` variable has your full Gmail address
+
+**Solution 2: Check Gmail Settings**
+
+1. Ensure 2-Step Verification is ENABLED on your Google account
+2. Make sure "Less secure app access" is OFF (we use App Password instead)
+3. Try logging into Gmail from a browser to ensure account is active
+
+**Solution 3: Alternative Email Service (If Gmail doesn't work)**
+
+If Gmail continues to fail, you can use SendGrid (free tier: 100 emails/day):
+
+1. Sign up at https://sendgrid.com
+2. Create an API key
+3. Update your backend environment variables:
+   ```
+   EMAIL_SERVICE = sendgrid
+   SENDGRID_API_KEY = your_sendgrid_api_key
+   EMAIL = your_verified_sender@yourdomain.com
+   ```
+4. Update `server/services/emailService.js` to use SendGrid instead of Gmail
+
+**Note**: The email service now uses port 587 (TLS) and forces IPv4 for better cloud compatibility.
 
 ---
 

@@ -3,13 +3,24 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Create transporter
+// Create transporter with explicit configuration for cloud platforms
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587, // Use port 587 (TLS) instead of 465 (SSL) for better cloud compatibility
+  secure: false, // Use STARTTLS
   auth: {
     user: process.env.EMAIL,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false, // Allow self-signed certificates (for cloud platforms)
+  },
+  // Force IPv4 to avoid IPv6 connection issues on Render
+  family: 4,
+  // Connection timeout settings
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 });
 
 // Send OTP email for password reset
