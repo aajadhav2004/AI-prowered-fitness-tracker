@@ -214,40 +214,45 @@ export async function getWeightProgress(userId) {
     // If user has weight history, filter for last 30 days
     if (user.weightHistory && user.weightHistory.length > 0) {
       history = user.weightHistory.filter(h => new Date(h.date) >= thirtyDaysAgo);
+    }
+    
+    // Build complete history for display
+    const historyForDisplay = [];
+    
+    // ALWAYS include registration weight if user was created within 30 days
+    if (user.createdAt >= thirtyDaysAgo) {
+      // Get the original registration weight
+      // This is either the oldest entry in ALL history (not just last 30 days)
+      // or the current weight if no history exists yet
+      let registrationWeight = currentWeight;
       
-      // If filtered history is empty but user was created within 30 days,
-      // check if there's an older entry we should include
-      if (history.length === 0 && user.createdAt >= thirtyDaysAgo) {
-        // Include the oldest weight history entry as starting point
-        history.push(user.weightHistory[0]);
+      if (user.weightHistory && user.weightHistory.length > 0) {
+        // Sort ALL history (not just last 30 days) to find the very first weight
+        const sortedAllHistory = [...user.weightHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
+        registrationWeight = sortedAllHistory[0].weight;
+      }
+      
+      // Check if we already have an entry at or very near registration date in our filtered history
+      const hasRegistrationEntry = history.some(h => 
+        Math.abs(new Date(h.date) - new Date(user.createdAt)) < 24 * 60 * 60 * 1000 // Within 1 day
+      );
+      
+      // Only add if not already present
+      if (!hasRegistrationEntry) {
+        historyForDisplay.push({
+          weight: registrationWeight,
+          date: user.createdAt,
+          source: 'registration'
+        });
       }
     }
     
-    // If still no history and user was created within 30 days, 
-    // check if there's at least one entry in weightHistory
-    if (history.length === 0 && user.weightHistory && user.weightHistory.length > 0) {
-      // Add the very first weight entry ever recorded
-      history.push(user.weightHistory[0]);
-    }
+    // Add all weight history entries from last 30 days
+    historyForDisplay.push(...history);
     
-    // Calculate min/max from history
-    let highest = currentWeight;
-    let lowest = currentWeight;
-    let startWeight = currentWeight;
+    // Add current weight if it's different from the last entry
+    const lastHistoryWeight = historyForDisplay.length > 0 ? historyForDisplay[historyForDisplay.length - 1].weight : null;
     
-    if (history.length > 0) {
-      const weights = history.map(h => h.weight);
-      weights.push(currentWeight); // Include current weight in min/max calculation
-      highest = Math.max(...weights);
-      lowest = Math.min(...weights);
-      startWeight = history[0].weight;
-    }
-    
-    const totalChange = currentWeight - startWeight;
-    
-    // Add current weight to history for display if not already there
-    const historyForDisplay = [...history];
-    const lastHistoryWeight = history.length > 0 ? history[history.length - 1].weight : null;
     if (lastHistoryWeight !== currentWeight) {
       historyForDisplay.push({
         weight: currentWeight,
@@ -255,6 +260,16 @@ export async function getWeightProgress(userId) {
         source: user.lastWeightUpdate ? 'auto' : 'current'
       });
     }
+    
+    // Sort by date to ensure chronological order
+    historyForDisplay.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Calculate min/max from all weights
+    const allWeights = historyForDisplay.map(h => h.weight);
+    const highest = allWeights.length > 0 ? Math.max(...allWeights) : currentWeight;
+    const lowest = allWeights.length > 0 ? Math.min(...allWeights) : currentWeight;
+    const startWeight = historyForDisplay.length > 0 ? historyForDisplay[0].weight : currentWeight;
+    const totalChange = currentWeight - startWeight;
 
     return {
       currentWeight,

@@ -17,3 +17,7 @@ run python (ml-model):
 (3)venv\Scripts\activate
 (4)pip install -r requirements.txt
 (5)uvicorn app:app --reload
+
+#Admin credentials:
+email:admin@fitness.com
+password:admin123
