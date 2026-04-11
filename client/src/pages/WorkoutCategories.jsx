@@ -139,7 +139,7 @@ const WorkoutCategories = () => {
         {/* Add Category Form */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">Add New Category</h2>
-          <form onSubmit={handleAdd} className="flex gap-3">
+          <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               placeholder="Category name (e.g., Cardio, Strength, Yoga)"
@@ -150,7 +150,7 @@ const WorkoutCategories = () => {
             />
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition shadow-sm hover:shadow-md"
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition shadow-sm hover:shadow-md"
             >
               <Plus className="w-5 h-5" />
               Add

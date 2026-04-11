@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { LogOut, Shield } from "lucide-react";
+import { LogOut, Shield, Menu, X } from "lucide-react";
 
 export default function AdminNavbar() {
   const nav = useNavigate();
   const location = useLocation();
+  const [open, setOpen] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -53,13 +54,57 @@ export default function AdminNavbar() {
 
         {/* Mobile Menu Button */}
         <button
-          className="md:hidden flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition font-medium"
-          onClick={logout}
+          className="md:hidden p-2 rounded hover:bg-gray-100"
+          onClick={() => setOpen(!open)}
         >
-          <LogOut className="w-4 h-4" />
-          Logout
+          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
+
+      {/* Mobile Menu */}
+      {open && (
+        <div className="md:hidden bg-white border-t px-4 py-3 flex flex-col gap-2">
+          <Link
+            to="/admin/categories"
+            onClick={() => setOpen(false)}
+            className="block w-full py-2 px-3 rounded-md text-gray-700 text-center hover:bg-gray-100"
+          >
+            Workout Categories
+          </Link>
+
+          <Link
+            to="/admin/sub-categories"
+            onClick={() => setOpen(false)}
+            className="block w-full py-2 px-3 rounded-md text-gray-700 text-center hover:bg-gray-100"
+          >
+            Sub-Categories
+          </Link>
+
+          <Link
+            to="/admin/tutorials"
+            onClick={() => setOpen(false)}
+            className="block w-full py-2 px-3 rounded-md text-gray-700 text-center hover:bg-gray-100"
+          >
+            Add Tutorials
+          </Link>
+
+          <Link
+            to="/admin/manage-tutorials"
+            onClick={() => setOpen(false)}
+            className="block w-full py-2 px-3 rounded-md text-gray-700 text-center hover:bg-gray-100"
+          >
+            Manage Tutorials
+          </Link>
+
+          <button
+            onClick={logout}
+            className="w-full py-2 px-3 rounded-md text-red-600 text-center hover:bg-gray-100 mt-2 font-medium flex items-center justify-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </button>
+        </div>
+      )}
     </div>
   );
 }
