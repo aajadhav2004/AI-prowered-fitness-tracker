@@ -241,10 +241,9 @@ CLOUDINARY_API_SECRET=your_api_secret
 # Google Gemini AI
 GEMINI_API_KEY=your_gemini_api_key
 
-# Email Service (Resend)
-# Sign up at https://resend.com and get your API key
-RESEND_API_KEY=re_your_resend_api_key_here
-RESEND_FROM_EMAIL=onboarding@resend.dev
+# Email Service
+EMAIL=your_email@gmail.com
+EMAIL_PASS=your_app_password
 
 # Frontend URL
 FRONTEND_URL=http://localhost:3000

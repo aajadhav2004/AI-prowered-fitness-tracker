@@ -83,9 +83,9 @@ CLOUDINARY_API_KEY = your_cloudinary_api_key
 
 CLOUDINARY_API_SECRET = your_cloudinary_api_secret
 
-RESEND_API_KEY = re_your_resend_api_key
+EMAIL = your_email@gmail.com
 
-RESEND_FROM_EMAIL = onboarding@yourdomain.com
+EMAIL_PASS = your_gmail_app_password
 
 GEMINI_API_KEY = your_gemini_api_key
 
@@ -95,12 +95,8 @@ FRONTEND_URL = https://fitness-tracker-frontend.onrender.com
 **Important Notes:**
 
 - Replace all `your_*` values with actual credentials
-- For `RESEND_API_KEY`, sign up at https://resend.com (free tier: 100 emails/day)
-  - Go to Resend Dashboard → API Keys → Create API Key
-  - Copy the API key (starts with `re_`)
-- For `RESEND_FROM_EMAIL`:
-  - Free tier: Use `onboarding@resend.dev` (default, works immediately)
-  - Custom domain: Add and verify your domain in Resend, then use `noreply@yourdomain.com`
+- For `EMAIL_PASS`, use Gmail App Password (not regular password)
+  - Go to Google Account → Security → 2-Step Verification → App Passwords
 - Keep `JWT_SECRET` secure and at least 32 characters
 - `FRONTEND_URL` will be your frontend URL (add this after deploying frontend in Step 5)
 - Note: Variable is `MONGODB_URL` (not `MONGODB_URI`) and `EMAIL` (not `EMAIL_USER`)
@@ -409,35 +405,6 @@ If you encounter issues:
 3. Verify all environment variables
 4. Test each service individually
 5. Check MongoDB Atlas network access
-
----
-
-## Common Issues & Troubleshooting
-
-### Email Sending with Resend
-
-The application now uses **Resend** for email delivery, which is more reliable on cloud platforms.
-
-**Setup Steps:**
-
-1. Sign up at https://resend.com (free tier: 100 emails/day, 3,000/month)
-2. Go to Dashboard → API Keys → Create API Key
-3. Copy the API key (starts with `re_`)
-4. Add to Render environment variables:
-   - `RESEND_API_KEY` = your API key
-   - `RESEND_FROM_EMAIL` = `onboarding@resend.dev` (default, works immediately)
-
-**For Custom Domain (Optional):**
-
-1. In Resend Dashboard → Domains → Add Domain
-2. Add your domain and verify DNS records
-3. Once verified, update `RESEND_FROM_EMAIL` to `noreply@yourdomain.com`
-
-**Testing:**
-
-- Password reset emails will be sent from IntelliFit
-- Check Resend Dashboard → Logs to see email delivery status
-- Free tier is sufficient for most applications
 
 ---
 
